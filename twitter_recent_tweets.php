@@ -32,6 +32,7 @@
  */
 
 
+
 /**
  * Require Twitter OAuth, setup namespace
  *
@@ -56,6 +57,42 @@ use Abraham\TwitterOAuth\TwitterOAuth;
 if ( date_default_timezone_get() === ini_get('date.timezone') ) {
 
   date_default_timezone_set('America/New_York');
+
+}
+
+
+
+/**
+ * Get a URL via file_get_contents, fallback to cURL
+ * via https://gist.github.com/mrclay/1271106
+ *
+ * @param  $url  string  url to fetch
+ * @since  1.0.0
+ */
+function Fetch_Url( $url ) {
+
+  $allowUrlFopen = preg_match('/1|yes|on|true/i', ini_get('allow_url_fopen'));
+
+  if ( $allowUrlFopen ) {
+
+      return file_get_contents($url);
+
+  } elseif ( function_exists('curl_init') ) {
+
+      $c = curl_init($url);
+      curl_setopt($c, CURLOPT_RETURNTRANSFER, 1);
+      $contents = curl_exec($c);
+      curl_close($c);
+
+      if ( is_string($contents) ) {
+
+          return $contents;
+
+      }
+
+  }
+
+  return false;
 
 }
 
@@ -107,7 +144,7 @@ function get_tweets_json(
   // Show cached version of tweets, if it's less than $cache_lifespan.
   if ( $cache_file_exists && time() - $cache_lifespan < $cache_file_mod ) {
 
-    return json_decode(  FPC_Fetch_Url( $cache_file ), true );
+    return json_decode(  Fetch_Url( $cache_file ), true );
 
   } else {
 
